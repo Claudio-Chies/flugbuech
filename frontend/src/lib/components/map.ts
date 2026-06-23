@@ -3,7 +3,7 @@
 // Please be fair and don't mis-use. I know that I can move this out of the source, but it's a
 // free account anyways, so all you can do is annoy me if the account is banned.
 export const MAPBOX_ACCESS_TOKEN =
-    'pk.eyJ1IjoiZGFuaWxvIiwiYSI6ImNrMHk4bHcyaTA0OGMzcHA2aXloems2MnQifQ.YovfgNgeajD4aORTUE5aFw';
+    'pk.eyJ1IjoiY2xhdWRpby1jaGllcyIsImEiOiJjbXFxYTA5dGswY3NtMnJyMTVnOTgwaDc1In0.t_2TMdTK7iGMmHSb1l7OXA';
 
 // Mapbox styles
 export const MAPBOX_STYLE_DEFAULT = 'outdoors-v11';
