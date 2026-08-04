@@ -8,11 +8,11 @@
 
   import type {Data} from './+page';
 
-  export let data: Data;
+  let {data}: {data: Data} = $props();
 
-  $: flight = data.flight;
-  $: launchAt = data.flight.launchAt;
-  $: landingAt = data.flight.landingAt;
+  const flight = $derived(data.flight);
+  const launchAt = $derived(data.flight.launchAt);
+  const landingAt = $derived(data.flight.landingAt);
 </script>
 
 <nav class="breadcrumb" aria-label="breadcrumbs">

@@ -1,12 +1,11 @@
 <script lang="ts">
-  import {onMount} from 'svelte';
+  import {onMount, untrack, type Snippet} from 'svelte';
 
   import {u8aToBase64} from '$lib/base64';
   import MessageModal from '$lib/components/MessageModal.svelte';
   import {countryCodeToFlag} from '$lib/formatters';
   import {i18n} from '$lib/i18n';
   import {addFlash} from '$lib/stores';
-  import {reactive} from '$lib/svelte';
   import {
     calculateFlightDuration,
     hmsToTime,
@@ -31,47 +30,82 @@
   } from './api';
 
   // Props
-  export let flight: Flight | undefined = undefined;
-  export let gliders: Glider[];
-  export let lastGliderId: number | undefined = undefined;
-  export let locations: FlightLocation[];
-  export let existingFlightNumbers: number[] = [];
+  interface Props {
+    flight?: Flight | undefined;
+    gliders: Glider[];
+    lastGliderId?: number | undefined;
+    locations: FlightLocation[];
+    existingFlightNumbers?: number[];
+    title?: Snippet;
+    intro?: Snippet;
+  }
+
+  const {
+    flight = undefined,
+    gliders,
+    lastGliderId = undefined,
+    locations,
+    existingFlightNumbers = [],
+    title,
+    intro,
+  }: Props = $props();
 
   // Form values
   // Note: Values for number inputs must allow null!
-  let files: FileList | undefined;
-  let igcBase64: string | undefined;
-  let number: number | null =
-    flight?.number ??
-    (existingFlightNumbers.length > 0 ? Math.max(...existingFlightNumbers) + 1 : null);
-  let glider: number | undefined = flight?.gliderId ?? lastGliderId;
+  let files: FileList | undefined = $state();
+  let igcBase64: string | undefined = $state();
+  let number: number | null = $state(
+    untrack(
+      () =>
+        flight?.number ??
+        (existingFlightNumbers.length > 0 ? Math.max(...existingFlightNumbers) + 1 : null),
+    ),
+  );
+  let glider: number | undefined = $state(untrack(() => flight?.gliderId ?? lastGliderId));
   // Note: For the select input value binding to work correctly, entries from `locations` must be
   // used, even if they're compatible with the type included in the flight data.
-  let launchAt: FlightLocation | undefined = locations.find(
-    (location) => location.id == flight?.launchAt?.id,
+  let launchAt: FlightLocation | undefined = $state(
+    untrack(() => locations.find((location) => location.id == flight?.launchAt?.id)),
   );
-  let landingAt: FlightLocation | undefined = locations.find(
-    (location) => location.id == flight?.landingAt?.id,
+  let landingAt: FlightLocation | undefined = $state(
+    untrack(() => locations.find((location) => location.id == flight?.landingAt?.id)),
   );
   // Text input values for location autocomplete
-  let launchAtText: string = launchAt
-    ? `${countryCodeToFlag(launchAt.countryCode)} ${launchAt.name} ${launchAt.elevation} m`
-    : '';
-  let landingAtText: string = landingAt
-    ? `${countryCodeToFlag(landingAt.countryCode)} ${landingAt.name} ${landingAt.elevation} m`
-    : '';
-  let hikeandfly: boolean = flight?.hikeandfly ?? false;
+  let launchAtText: string = $state(
+    untrack(() =>
+      launchAt
+        ? `${countryCodeToFlag(launchAt.countryCode)} ${launchAt.name} ${launchAt.elevation} m`
+        : '',
+    ),
+  );
+  let landingAtText: string = $state(
+    untrack(() =>
+      landingAt
+        ? `${countryCodeToFlag(landingAt.countryCode)} ${landingAt.name} ${landingAt.elevation} m`
+        : '',
+    ),
+  );
+  let hikeandfly: boolean = $state(untrack(() => flight?.hikeandfly ?? false));
   // Auto-populate date to today and times to 00:00 for new flights
-  let launchDate: string =
-    flight?.launchTime?.toISOString().slice(0, 10) ?? new Date().toISOString().slice(0, 10);
-  let launchTime: string = flight?.launchTime?.toISOString().slice(11, 16) ?? '00:00';
-  let landingTime: string = flight?.landingTime?.toISOString().slice(11, 16) ?? '00:00';
-  let trackDistance: string = flight?.trackDistance?.toFixed(2) ?? '';
-  let xcontestTracktype: XContestTracktype | undefined = flight?.xcontestTracktype;
-  let xcontestDistance: string = flight?.xcontestDistance?.toFixed(2) ?? '';
-  let xcontestUrl: string = flight?.xcontestUrl ?? '';
-  let comment: string = flight?.comment ?? '';
-  let videoUrl: string = flight?.videoUrl ?? '';
+  let launchDate: string = $state(
+    untrack(
+      () => flight?.launchTime?.toISOString().slice(0, 10) ?? new Date().toISOString().slice(0, 10),
+    ),
+  );
+  let launchTime: string = $state(
+    untrack(() => flight?.launchTime?.toISOString().slice(11, 16) ?? '00:00'),
+  );
+  let landingTime: string = $state(
+    untrack(() => flight?.landingTime?.toISOString().slice(11, 16) ?? '00:00'),
+  );
+  let trackDistance: string = $state(untrack(() => flight?.trackDistance?.toFixed(2) ?? ''));
+  let xcontestTracktype: XContestTracktype | undefined = $state(
+    untrack(() => flight?.xcontestTracktype),
+  );
+  let xcontestDistance: string = $state(untrack(() => flight?.xcontestDistance?.toFixed(2) ?? ''));
+  let xcontestUrl: string = $state(untrack(() => flight?.xcontestUrl ?? ''));
+  let comment: string = $state(untrack(() => flight?.comment ?? ''));
+  let videoUrl: string = $state(untrack(() => flight?.videoUrl ?? ''));
 
   // Validation
   const fields = [
@@ -85,7 +119,7 @@
     'trackDistance',
     'xcontestDistance',
   ] as const;
-  let fieldErrors: Record<(typeof fields)[number], string | undefined> = {
+  let fieldErrors: Record<(typeof fields)[number], string | undefined> = $state({
     number: undefined,
     glider: undefined,
     launchAt: undefined,
@@ -95,7 +129,7 @@
     landingTime: undefined,
     trackDistance: undefined,
     xcontestDistance: undefined,
-  };
+  });
   function validateNumber(): void {
     fieldErrors = {
       ...fieldErrors,
@@ -105,8 +139,13 @@
           : undefined,
     };
   }
-  $: reactive(validateNumber, [number]);
-  $: gliderIds = gliders.map((g) => g.id).filter((id): id is number => id !== undefined);
+  $effect(() => {
+    void number;
+    untrack(validateNumber);
+  });
+  const gliderIds = $derived(
+    gliders.map((g) => g.id).filter((id): id is number => id !== undefined),
+  );
   function validateGlider(): void {
     fieldErrors = {
       ...fieldErrors,
@@ -116,10 +155,13 @@
           : undefined,
     };
   }
-  $: reactive(validateGlider, [glider]);
+  $effect(() => {
+    void glider;
+    untrack(validateGlider);
+  });
 
   // When user changes launch time and landing is earlier, update landing to match launch
-  let previousLaunchTime = launchTime;
+  let previousLaunchTime = untrack(() => launchTime);
   function adjustLandingTime(): void {
     if (launchTime !== previousLaunchTime && launchTime !== '' && landingTime !== '') {
       if (isTimeBefore(landingTime, launchTime)) {
@@ -128,7 +170,10 @@
     }
     previousLaunchTime = launchTime;
   }
-  $: reactive(adjustLandingTime, [launchTime]);
+  $effect(() => {
+    void launchTime;
+    untrack(adjustLandingTime);
+  });
 
   function validateDatesAndTimes(): void {
     // TODO(#74): Allow dates without time
@@ -146,7 +191,10 @@
           : undefined,
     };
   }
-  $: reactive(validateDatesAndTimes, [launchDate, launchTime, landingTime]);
+  $effect(() => {
+    void [launchDate, launchTime, landingTime];
+    untrack(validateDatesAndTimes);
+  });
   function validateTrackDistance(): void {
     // TODO: Create proper NumberInput component
     const distanceRe = /^[0-9]+(\.[0-9]+)?$/u;
@@ -159,7 +207,10 @@
           : $i18n.t('flight.error--invalid-distance'),
     };
   }
-  $: reactive(validateTrackDistance, [trackDistance]);
+  $effect(() => {
+    void trackDistance;
+    untrack(validateTrackDistance);
+  });
   function validateXContestDistance(): void {
     // TODO: Create proper NumberInput component
     const distanceRe = /^[0-9]+(\.[0-9]+)?$/u;
@@ -172,7 +223,10 @@
           : $i18n.t('flight.error--invalid-distance'),
     };
   }
-  $: reactive(validateXContestDistance, [xcontestDistance]);
+  $effect(() => {
+    void xcontestDistance;
+    untrack(validateXContestDistance);
+  });
   function validateLocations(): void {
     const formatLocation = (loc: FlightLocation): string =>
       `${countryCodeToFlag(loc.countryCode)} ${loc.name} ${loc.elevation} m`;
@@ -205,11 +259,14 @@
   }
 
   // Flight duration display
-  let flightDuration: string | undefined;
+  let flightDuration: string | undefined = $state();
   function recalculateDuration(): void {
     flightDuration = calculateFlightDuration(launchTime, landingTime);
   }
-  $: reactive(recalculateDuration, [launchTime, landingTime]);
+  $effect(() => {
+    void [launchTime, landingTime];
+    untrack(recalculateDuration);
+  });
 
   // Location lookup from text input
   function handleLocationInput(
@@ -232,8 +289,8 @@
   }
 
   // Error handling
-  let submitEnabled = true;
-  let submitError: SubmitErrorData | undefined;
+  let submitEnabled = $state(true);
+  let submitError: SubmitErrorData | undefined = $state();
 
   // Form submission
   async function submitForm(): Promise<void> {
@@ -366,10 +423,13 @@
         alert($i18n.t('flight.error--could-not-process-igc', {message: `${e}`}));
       });
   }
-  $: reactive(onFileInputChange, [files]);
+  $effect(() => {
+    void files;
+    untrack(onFileInputChange);
+  });
 
   // File drop target
-  let dragFileOverlayVisible = false;
+  let dragFileOverlayVisible = $state(false);
   function setUpDropTarget(): void {
     function onDragOver(e: DragEvent) {
       e.stopPropagation();
@@ -420,14 +480,16 @@
     message={$i18n.t('common.error--login-session-expired')}
     showClose={false}
   >
-    <section slot="buttons">
-      <a
-        href="/auth/login/?redirect=/flights/{flight == undefined ? '' : `${flight.id}/edit`}"
-        class="button is-warning"
-      >
-        {$i18n.t('navigation.login')}
-      </a>
-    </section>
+    {#snippet buttons()}
+      <section>
+        <a
+          href="/auth/login/?redirect=/flights/{flight == undefined ? '' : `${flight.id}/edit`}"
+          class="button is-warning"
+        >
+          {$i18n.t('navigation.login')}
+        </a>
+      </section>
+    {/snippet}
   </MessageModal>
 {:else if submitError?.type === 'api-error'}
   <MessageModal
@@ -437,18 +499,18 @@
       ? $i18n.t('flight.error--add-error', {message: submitError.message})
       : $i18n.t('flight.error--update-error', {message: submitError.message})}
     showClose={true}
-    on:closed={() => (submitError = undefined)}
+    onClose={() => (submitError = undefined)}
   />
 {/if}
 
-<slot name="title" />
+{@render title?.()}
 
-<slot name="intro" />
+{@render intro?.()}
 
 <div class="spaced-headers">
   <form
     method="post"
-    on:submit={(event) => {
+    onsubmit={(event) => {
       event.preventDefault();
       void submitForm();
     }}
@@ -553,7 +615,7 @@
               list="launchSiteList"
               placeholder={$i18n.t('flight.title--launch-site')}
               bind:value={launchAtText}
-              on:input={() =>
+              oninput={() =>
                 handleLocationInput(launchAtText, (loc) => (launchAt = loc), 'launchAt')}
               class:error={fieldErrors.launchAt !== undefined}
             />
@@ -591,7 +653,7 @@
               list="landingSiteList"
               placeholder={$i18n.t('flight.title--landing-site')}
               bind:value={landingAtText}
-              on:input={() =>
+              oninput={() =>
                 handleLocationInput(landingAtText, (loc) => (landingAt = loc), 'landingAt')}
               class:error={fieldErrors.landingAt !== undefined}
             />

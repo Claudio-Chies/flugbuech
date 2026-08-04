@@ -1,10 +1,9 @@
 <script lang="ts">
   import {Map, NavigationControl, Marker, type LngLatLike} from 'maplibre-gl';
-  import {onMount, tick} from 'svelte';
+  import {onMount, tick, untrack} from 'svelte';
 
   import {unreachable} from '$lib/assert';
   import {MapDoubleClickDetector} from '$lib/map-helpers';
-  import {reactive} from '$lib/svelte';
 
   import {
     DEFAULT_MAP_CENTER,
@@ -25,37 +24,47 @@
   // Minimum zoom level for elevation queries (contours available from zoom 9)
   const MIN_ZOOM_FOR_ELEVATION_QUERY = 9;
 
-  export let mode: 'single' | 'multi';
+  interface Props {
+    mode: 'single' | 'multi';
+    // Common props
+    mapMode?: 'small' | 'large';
+    // Props only used for mode 'single'
+    center?: LngLatLike;
+    zoom?: number;
+    latitude?: number | null;
+    longitude?: number | null;
+    editable?: boolean;
+    onElevationLookup?:
+      | ((data: {elevation: number | null; zoomTooLow: boolean}) => void)
+      | undefined;
+    onCountryLookup?: ((data: {countryCode: string | null}) => void) | undefined;
+    // Props only used for mode 'multi'
+    markers?: NamedCoordinates[];
+  }
 
-  // Common props
-  export let mapMode: 'small' | 'large' = 'small';
-
-  // Props only used for mode 'single'
-  export let center: LngLatLike = DEFAULT_MAP_CENTER;
-  export let zoom: number = 6;
-  export let latitude: number | null = null;
-  export let longitude: number | null = null;
-  export let editable: boolean = false;
-
-  export let onElevationLookup:
-    | ((data: {elevation: number | null; zoomTooLow: boolean}) => void)
-    | undefined = undefined;
-  export let onCountryLookup: ((data: {countryCode: string | null}) => void) | undefined =
-    undefined;
-
-  // Props only used for mode 'multi'
-  export let markers: NamedCoordinates[] = [];
+  let {
+    mode,
+    mapMode = $bindable('small'),
+    center = DEFAULT_MAP_CENTER,
+    zoom = 6,
+    latitude = $bindable(null),
+    longitude = $bindable(null),
+    editable = false,
+    onElevationLookup = undefined,
+    onCountryLookup = undefined,
+    markers = [],
+  }: Props = $props();
 
   // Map type
   type MapType = 'mapbox-outdoors' | 'mapbox-satellite' | 'swisstopo' | 'swissimage';
-  let mapType: MapType = 'mapbox-outdoors';
+  let mapType: MapType = $state('mapbox-outdoors');
 
   // Map variable
-  let container: HTMLElement;
-  let map: Map | null = null;
+  let container: HTMLElement | undefined = $state();
+  let map: Map | null = $state(null);
 
   // Markers
-  let mapMarker: Marker | undefined;
+  let mapMarker: Marker | undefined = $state();
   let markersLoaded = false;
 
   /**
@@ -381,25 +390,33 @@
   }
 
   // Handle map type updates
-  $: if (map !== null) {
-    updateMapType(map, mapType);
-  }
+  $effect(() => {
+    if (map !== null) {
+      updateMapType(map, mapType);
+    }
+  });
 
   // In 'single' mode, when the input value changes, update the marker
-  $: reactive(() => {
-    if (mode !== 'single' || !editable || mapMarker === undefined) {
-      return;
-    }
-    const pos = {lng: longitude, lat: latitude};
-    if (isValidPos(pos) === true) {
-      mapMarker.setLngLat(pos);
-      ensureSingleMarkerVisible();
-      map?.flyTo({center: pos});
-    }
-  }, [latitude, longitude]);
+  $effect(() => {
+    void [latitude, longitude];
+    untrack(() => {
+      if (mode !== 'single' || !editable || mapMarker === undefined) {
+        return;
+      }
+      const pos = {lng: longitude, lat: latitude};
+      if (isValidPos(pos) === true) {
+        mapMarker.setLngLat(pos);
+        ensureSingleMarkerVisible();
+        map?.flyTo({center: pos});
+      }
+    });
+  });
 
   onMount(() => {
     // Create map
+    if (container === undefined) {
+      return;
+    }
     map = new Map({
       container,
       style: `mapbox://styles/mapbox/${MAPBOX_STYLE_DEFAULT}`,
@@ -419,7 +436,7 @@
   bind:this={container}
   style:height={mapMode === 'small' ? MAP_HEIGHT_SMALL : MAP_HEIGHT_LARGE}
 >
-  <button type="button" class="map-resize-button button" on:click={toggleMapSize}>
+  <button type="button" class="map-resize-button button" onclick={toggleMapSize}>
     <span class="icon">
       {#if mapMode === 'small'}
         <i class="fa-solid fa-up-right-and-down-left-from-center"></i>

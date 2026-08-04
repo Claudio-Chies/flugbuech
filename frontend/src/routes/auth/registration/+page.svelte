@@ -1,5 +1,5 @@
 <script lang="ts">
-  import {onMount} from 'svelte';
+  import {onMount, untrack} from 'svelte';
 
   import {ensureError} from '$lib/assert';
   import Flashes from '$lib/components/Flashes.svelte';
@@ -8,30 +8,29 @@
   import {MIN_PASSWORD_LENGTH} from '$lib/constants';
   import {i18n} from '$lib/i18n';
   import {addFlash, refreshLoginState} from '$lib/stores';
-  import {reactive} from '$lib/svelte';
 
   import {goto} from '$app/navigation';
 
   import {apiRegister} from './api';
 
   // Form values
-  let username: string = '';
-  let email: string = '';
-  let password1: string = '';
-  let password2: string = '';
-  let newsletter: boolean = false;
+  let username: string = $state('');
+  let email: string = $state('');
+  let password1: string = $state('');
+  let password2: string = $state('');
+  let newsletter: boolean = $state(false);
 
   // Element bindings
-  let flashes: Flashes;
+  let flashes: Flashes | undefined = $state();
 
   // Validation
   const fields = ['username', 'email', 'password1', 'password2'] as const;
-  let fieldErrors: Record<(typeof fields)[number], string | undefined> = {
+  let fieldErrors: Record<(typeof fields)[number], string | undefined> = $state({
     username: undefined,
     email: undefined,
     password1: undefined,
     password2: undefined,
-  };
+  });
   function validateUsername(): void {
     fieldErrors = {
       ...fieldErrors,
@@ -39,14 +38,20 @@
         username.length < 3 ? $i18n.t('auth.error--username-too-short', {count: 3}) : undefined,
     };
   }
-  $: reactive(validateUsername, [username]);
+  $effect(() => {
+    void username;
+    untrack(validateUsername);
+  });
   function validateEmail(): void {
     fieldErrors = {
       ...fieldErrors,
       email: email.length < 1 ? $i18n.t('auth.error--missing-email') : undefined,
     };
   }
-  $: reactive(validateEmail, [email]);
+  $effect(() => {
+    void email;
+    untrack(validateEmail);
+  });
   function validatePassword1(): void {
     fieldErrors = {
       ...fieldErrors,
@@ -56,7 +61,10 @@
           : undefined,
     };
   }
-  $: reactive(validatePassword1, [password1]);
+  $effect(() => {
+    void password1;
+    untrack(validatePassword1);
+  });
   function validatePassword2(): void {
     fieldErrors = {
       ...fieldErrors,
@@ -68,7 +76,10 @@
             : $i18n.t('auth.error--password-dont-match'),
     };
   }
-  $: reactive(validatePassword2, [password1, password2]);
+  $effect(() => {
+    void [password1, password2];
+    untrack(validatePassword2);
+  });
   function validateAll(): void {
     validateUsername();
     validateEmail();
@@ -82,8 +93,8 @@
   }
 
   // Error handling
-  let submitEnabled = true;
-  let submitError: {type: 'api-error'; message: string} | undefined;
+  let submitEnabled = $state(true);
+  let submitError: {type: 'api-error'; message: string} | undefined = $state();
 
   async function submitForm(): Promise<void> {
     submitEnabled = false;
@@ -133,7 +144,7 @@
         severity: 'error',
         icon: 'fa-circle-exclamation',
       });
-      flashes.update(true);
+      flashes?.update(true);
     }
 
     submitEnabled = true;
@@ -151,7 +162,7 @@
     title={$i18n.t('common.error--api-error')}
     message={submitError.message}
     showClose={true}
-    on:closed={() => (submitError = undefined)}
+    onClose={() => (submitError = undefined)}
   />
 {/if}
 
@@ -161,13 +172,13 @@
 
 <p class="content">
   <SubstitutableText text={$i18n.t('auth.prose--already-have-an-account')}>
-    <a slot="1" href="/auth/login/" let:text>{text}</a>
+    {#snippet snippet1(text)}<a href="/auth/login/">{text}</a>{/snippet}
   </SubstitutableText>
 </p>
 
 <form
   method="post"
-  on:submit={(event) => {
+  onsubmit={(event) => {
     event.preventDefault();
     void submitForm();
   }}
@@ -175,7 +186,7 @@
   <div class="field">
     <label class="label" for="username">{$i18n.t('auth.title--username')}</label>
     <div class="control has-icons-left">
-      <!-- svelte-ignore a11y-autofocus -->
+      <!-- svelte-ignore a11y_autofocus -->
       <input
         id="username"
         type="text"
@@ -267,7 +278,7 @@
 
   <p class="content privacy-policy-hint">
     <SubstitutableText text={$i18n.t('auth.prose--privacy-policy-acknowledge')}>
-      <a slot="1" href="/privacy-policy/" target="_blank" let:text>{text}</a>
+      {#snippet snippet1(text)}<a href="/privacy-policy/" target="_blank">{text}</a>{/snippet}
     </SubstitutableText>
   </p>
   <div class="field">

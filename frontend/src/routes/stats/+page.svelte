@@ -6,11 +6,13 @@
 
   import type {Data} from './+page';
 
-  export let data: Data;
+  let {data}: {data: Data} = $props();
 
-  $: sortedStats = Object.entries(data.yearlyStats)
-    .map(([year, stats]) => ({year, ...stats}))
-    .sort((a, b) => b.year.localeCompare(a.year));
+  const sortedStats = $derived(
+    Object.entries(data.yearlyStats)
+      .map(([year, stats]) => ({year, ...stats}))
+      .sort((a, b) => b.year.localeCompare(a.year)),
+  );
 </script>
 
 <nav class="breadcrumb" aria-label="breadcrumbs">

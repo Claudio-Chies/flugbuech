@@ -11,7 +11,7 @@
 
   import type {Data} from './+page';
 
-  export let data: Data;
+  let {data}: {data: Data} = $props();
 
   onMount(() => {
     requireLogin($loginState, '/flights/add/');
@@ -36,44 +36,48 @@
   locations={data.locations}
   existingFlightNumbers={data.existingFlightNumbers}
 >
-  <h2 slot="title" class="title is-2">{$i18n.t('flight.title--add-flight')}</h2>
+  {#snippet title()}
+    <h2 class="title is-2">{$i18n.t('flight.title--add-flight')}</h2>
+  {/snippet}
 
-  <section slot="intro">
-    <p class="content">
-      {$i18n.t('flight.prose--fill-out-form')}
-    </p>
+  {#snippet intro()}
+    <section>
+      <p class="content">
+        {$i18n.t('flight.prose--fill-out-form')}
+      </p>
 
-    <p class="content">
-      <SubstitutableText text={$i18n.t('flight.prose--note-add-location')}>
-        <strong slot="1" let:text>{text}</strong>
-        <a slot="2" href="/locations/add/" let:text>{text}</a>
-      </SubstitutableText>
-    </p>
+      <p class="content">
+        <SubstitutableText text={$i18n.t('flight.prose--note-add-location')}>
+          {#snippet snippet1(text)}<strong>{text}</strong>{/snippet}
+          {#snippet snippet2(text)}<a href="/locations/add/">{text}</a>{/snippet}
+        </SubstitutableText>
+      </p>
 
-    {#if data.locations.length === 0}
-      <article class="message is-warning">
-        <div class="message-body">
-          <i class="fa-solid fa-warning"></i>&ensp;<SubstitutableText
-            text={$i18n.t('flight.prose--note-missing-location')}
-          >
-            <strong slot="1" let:text>{text}</strong>
-            <a slot="2" href="/locations/add/" let:text>{text}</a>
-          </SubstitutableText>
-        </div>
-      </article>
-    {/if}
+      {#if data.locations.length === 0}
+        <article class="message is-warning">
+          <div class="message-body">
+            <i class="fa-solid fa-warning"></i>&ensp;<SubstitutableText
+              text={$i18n.t('flight.prose--note-missing-location')}
+            >
+              {#snippet snippet1(text)}<strong>{text}</strong>{/snippet}
+              {#snippet snippet2(text)}<a href="/locations/add/">{text}</a>{/snippet}
+            </SubstitutableText>
+          </div>
+        </article>
+      {/if}
 
-    {#if data.gliders.length === 0}
-      <article class="message is-warning">
-        <div class="message-body">
-          <i class="fa-solid fa-warning"></i>&ensp;<SubstitutableText
-            text={$i18n.t('flight.prose--note-missing-gliders')}
-          >
-            <strong slot="1" let:text>{text}</strong>
-            <a slot="2" href="/gliders/" let:text>{text}</a>
-          </SubstitutableText>
-        </div>
-      </article>
-    {/if}
-  </section>
+      {#if data.gliders.length === 0}
+        <article class="message is-warning">
+          <div class="message-body">
+            <i class="fa-solid fa-warning"></i>&ensp;<SubstitutableText
+              text={$i18n.t('flight.prose--note-missing-gliders')}
+            >
+              {#snippet snippet1(text)}<strong>{text}</strong>{/snippet}
+              {#snippet snippet2(text)}<a href="/gliders/">{text}</a>{/snippet}
+            </SubstitutableText>
+          </div>
+        </article>
+      {/if}
+    </section>
+  {/snippet}
 </FlightForm>

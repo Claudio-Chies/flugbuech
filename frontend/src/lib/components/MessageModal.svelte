@@ -1,14 +1,18 @@
 <script lang="ts">
-  import {createEventDispatcher} from 'svelte';
+  import type {Snippet} from 'svelte';
 
-  export let type: 'warning' | 'error';
-  export let title: string;
-  export let message: string;
-  export let showClose = true;
+  interface Props {
+    type: 'warning' | 'error';
+    title: string;
+    message: string;
+    showClose?: boolean;
+    onClose?: () => void;
+    buttons?: Snippet;
+  }
 
-  $: articleClass = type === 'warning' ? 'is-warning' : 'is-danger';
+  const {type, title, message, showClose = true, onClose, buttons}: Props = $props();
 
-  const dispatch = createEventDispatcher<{closed: void}>();
+  const articleClass = $derived(type === 'warning' ? 'is-warning' : 'is-danger');
 </script>
 
 <div class="modal is-active">
@@ -18,13 +22,12 @@
       <div class="message-header">
         <p>{title}</p>
         {#if showClose}
-          <button class="delete" aria-label="close" on:click={() => dispatch('closed', undefined)}
-          ></button>
+          <button class="delete" aria-label="close" onclick={() => onClose?.()}></button>
         {/if}
       </div>
-      <div class="message-body" class:has-buttons={$$slots.buttons}>
+      <div class="message-body" class:has-buttons={buttons}>
         <section>{message}</section>
-        <slot name="buttons" />
+        {@render buttons?.()}
       </div>
     </article>
   </div>

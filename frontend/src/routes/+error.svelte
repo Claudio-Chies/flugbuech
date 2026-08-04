@@ -1,7 +1,7 @@
 <script lang="ts">
   import Flashes from '$lib/components/Flashes.svelte';
 
-  import {page} from '$app/stores';
+  import {page} from '$app/state';
 </script>
 
 <Flashes />
@@ -13,9 +13,9 @@
 <article class="message is-danger">
   <div class="message-body">
     <p class="content">
-      {$page.error?.message ?? 'Unknown error'}
+      {page.error?.message ?? 'Unknown error'}
     </p>
 
-    <p class="content">Error code: {$page.status}</p>
+    <p class="content">Error code: {page.status}</p>
   </div>
 </article>

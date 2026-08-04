@@ -15,13 +15,18 @@
   import type {Data} from './+page';
   import type {FlightListItem} from './api';
 
-  export let data: Data;
+  interface Props {
+    data: Data;
+  }
 
-  let flashes: Flashes;
+  const {data}: Props = $props();
 
-  let flightToDelete: FlightListItem | undefined;
-  let deleting = false;
-  let deleteError: {type: 'authentication'} | {type: 'api-error'; message: string} | undefined;
+  let flashes: Flashes | undefined = $state();
+
+  let flightToDelete: FlightListItem | undefined = $state();
+  let deleting = $state(false);
+  let deleteError: {type: 'authentication'} | {type: 'api-error'; message: string} | undefined =
+    $state();
 
   function flightListItemName(f: FlightListItem): string {
     return flightName(
@@ -65,7 +70,7 @@
       }
 
       // Show flash message
-      flashes.update(true);
+      flashes?.update(true);
 
       // Hide delete dialog
       flightToDelete = undefined;
@@ -84,11 +89,13 @@
     message={$i18n.t('common.error--login-session-expired')}
     showClose={false}
   >
-    <section slot="buttons">
-      <a href="/auth/login/" class="button is-warning">
-        {$i18n.t('navigation.login')}
-      </a>
-    </section>
+    {#snippet buttons()}
+      <section>
+        <a href="/auth/login/" class="button is-warning">
+          {$i18n.t('navigation.login')}
+        </a>
+      </section>
+    {/snippet}
   </MessageModal>
 {:else if deleteError?.type === 'api-error'}
   <MessageModal
@@ -96,7 +103,7 @@
     title={$i18n.t('common.error--api-error')}
     message={$i18n.t('flights.error--delete-error', {message: deleteError.message})}
     showClose={true}
-    on:closed={() => (deleteError = undefined)}
+    onClose={() => (deleteError = undefined)}
   />
 {:else if flightToDelete !== undefined}
   <DialogModal
@@ -104,14 +111,16 @@
     message={$i18n.t('flights.prose--delete-confirm', {flight: flightListItemName(flightToDelete)})}
     dialogClass="is-danger"
   >
-    <section slot="buttons">
-      <button class="button is-white" on:click={() => (flightToDelete = undefined)}>
-        {$i18n.t('common.action--no-cancel')}
-      </button>
-      <button class="button is-danger" disabled={deleting} on:click={() => void deleteFlight()}>
-        {$i18n.t('common.action--yes-delete')}
-      </button>
-    </section>
+    {#snippet buttons()}
+      <section>
+        <button class="button is-white" onclick={() => (flightToDelete = undefined)}>
+          {$i18n.t('common.action--no-cancel')}
+        </button>
+        <button class="button is-danger" disabled={deleting} onclick={() => void deleteFlight()}>
+          {$i18n.t('common.action--yes-delete')}
+        </button>
+      </section>
+    {/snippet}
   </DialogModal>
 {/if}
 
@@ -219,7 +228,7 @@
                 class="icon has-text-danger"
                 title={$i18n.t('flights.action--delete-flight')}
                 aria-label={$i18n.t('flights.action--delete-flight')}
-                on:click={() => (flightToDelete = flight)}
+                onclick={() => (flightToDelete = flight)}
               >
                 <i class="fa-solid fa-trash-alt"></i>
               </button>

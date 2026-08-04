@@ -1,11 +1,17 @@
 <script lang="ts">
-  export let title: string;
-  export let message: string;
+  import type {Snippet} from 'svelte';
 
-  /**
-   * The BulmaCSS class.
-   */
-  export let dialogClass: 'is-link' | 'is-warning' | 'is-danger' = 'is-link';
+  interface Props {
+    title: string;
+    message: string;
+    /**
+     * The BulmaCSS class.
+     */
+    dialogClass?: 'is-link' | 'is-warning' | 'is-danger';
+    buttons?: Snippet;
+  }
+
+  const {title, message, dialogClass = 'is-link', buttons}: Props = $props();
 </script>
 
 <div class="modal is-active">
@@ -18,7 +24,7 @@
       <div class="message-body">
         <section class="dialog-text">{message}</section>
         <section class="dialog-buttons">
-          <slot name="buttons" />
+          {@render buttons?.()}
         </section>
       </div>
     </article>

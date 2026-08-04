@@ -1,31 +1,35 @@
 <script lang="ts">
-  import {onMount} from 'svelte';
+  import {onMount, untrack, type Snippet} from 'svelte';
 
   import {apiPost, extractResponseError} from '$lib/api';
   import MessageModal from '$lib/components/MessageModal.svelte';
   import {i18n} from '$lib/i18n';
   import {addFlash} from '$lib/stores';
-  import {reactive} from '$lib/svelte';
 
   import {goto} from '$app/navigation';
 
   import type {Glider} from './api';
 
   // Props
-  export let glider: Glider | undefined = undefined;
+  interface Props {
+    glider?: Glider | undefined;
+    title?: Snippet;
+  }
+
+  const {glider = undefined, title}: Props = $props();
 
   // Form values
-  let manufacturer: string = glider?.manufacturer ?? '';
-  let model: string = glider?.model ?? '';
-  let since: string = glider?.since ?? '';
-  let until: string = glider?.until ?? '';
-  let source: string = glider?.source ?? '';
-  let cost: number | null = glider?.cost ?? null;
-  let comment: string = glider?.comment ?? '';
+  let manufacturer: string = $state(untrack(() => glider?.manufacturer ?? ''));
+  let model: string = $state(untrack(() => glider?.model ?? ''));
+  let since: string = $state(untrack(() => glider?.since ?? ''));
+  let until: string = $state(untrack(() => glider?.until ?? ''));
+  let source: string = $state(untrack(() => glider?.source ?? ''));
+  let cost: number | null = $state(untrack(() => glider?.cost ?? null));
+  let comment: string = $state(untrack(() => glider?.comment ?? ''));
 
   // Validation
   const fields = ['manufacturer', 'model', 'since', 'until', 'source', 'cost', 'comment'] as const;
-  let fieldErrors: Record<(typeof fields)[number], string | undefined> = {
+  let fieldErrors: Record<(typeof fields)[number], string | undefined> = $state({
     manufacturer: undefined,
     model: undefined,
     since: undefined,
@@ -33,7 +37,7 @@
     source: undefined,
     cost: undefined,
     comment: undefined,
-  };
+  });
   function validateManufacturer(): void {
     fieldErrors = {
       ...fieldErrors,
@@ -41,14 +45,20 @@
         manufacturer.length < 1 ? $i18n.t('glider.warning--manufacturer-empty') : undefined,
     };
   }
-  $: reactive(validateManufacturer, [manufacturer]);
+  $effect(() => {
+    void manufacturer;
+    untrack(validateManufacturer);
+  });
   function validateModel(): void {
     fieldErrors = {
       ...fieldErrors,
       model: model.length < 1 ? $i18n.t('glider.warning--model-empty') : undefined,
     };
   }
-  $: reactive(validateModel, [model]);
+  $effect(() => {
+    void model;
+    untrack(validateModel);
+  });
   function validateUntil(): void {
     fieldErrors = {
       ...fieldErrors,
@@ -58,14 +68,20 @@
           : undefined,
     };
   }
-  $: reactive(validateUntil, [since, until]);
+  $effect(() => {
+    void [since, until];
+    untrack(validateUntil);
+  });
   function validateCost(): void {
     fieldErrors = {
       ...fieldErrors,
       cost: cost !== null && cost < 0 ? $i18n.t('glider.warning--cost-negative') : undefined,
     };
   }
-  $: reactive(validateCost, [cost]);
+  $effect(() => {
+    void cost;
+    untrack(validateCost);
+  });
   function validateAll(): void {
     validateManufacturer();
     validateModel();
@@ -78,8 +94,9 @@
   }
 
   // Error handling
-  let submitEnabled = true;
-  let submitError: {type: 'authentication'} | {type: 'api-error'; message: string} | undefined;
+  let submitEnabled = $state(true);
+  let submitError: {type: 'authentication'} | {type: 'api-error'; message: string} | undefined =
+    $state();
 
   async function submitForm(): Promise<void> {
     submitEnabled = false;
@@ -142,14 +159,16 @@
     message={$i18n.t('common.error--login-session-expired')}
     showClose={false}
   >
-    <section slot="buttons">
-      <a
-        href="/auth/login/?redirect=/gliders/{glider == undefined ? '' : `${glider.id}/edit`}"
-        class="button is-warning"
-      >
-        {$i18n.t('navigation.login')}
-      </a>
-    </section>
+    {#snippet buttons()}
+      <section>
+        <a
+          href="/auth/login/?redirect=/gliders/{glider == undefined ? '' : `${glider.id}/edit`}"
+          class="button is-warning"
+        >
+          {$i18n.t('navigation.login')}
+        </a>
+      </section>
+    {/snippet}
   </MessageModal>
 {:else if submitError?.type === 'api-error'}
   <MessageModal
@@ -159,16 +178,16 @@
       ? $i18n.t('glider.error--add-error', {message: submitError.message})
       : $i18n.t('glider.error--update-error', {message: submitError.message})}
     showClose={true}
-    on:closed={() => (submitError = undefined)}
+    onClose={() => (submitError = undefined)}
   />
 {/if}
 
-<slot name="title" />
+{@render title?.()}
 
 <div class="spaced-headers">
   <form
     method="post"
-    on:submit={(event) => {
+    onsubmit={(event) => {
       event.preventDefault();
       void submitForm();
     }}

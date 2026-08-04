@@ -8,25 +8,29 @@ Render a XContest flight summary, with icon, distance and link.
 
   import XContestTracktypeIcon from './XContestTracktypeIcon.svelte';
 
-  /**
-   * The track type.
-   */
-  export let tracktype: XContestTracktype | undefined;
+  interface Props {
+    /**
+     * The track type.
+     */
+    tracktype: XContestTracktype | undefined;
 
-  /**
-   * The flight distance in km.
-   */
-  export let distance: number | undefined;
+    /**
+     * The flight distance in km.
+     */
+    distance: number | undefined;
 
-  /**
-   * The XContest URL.
-   */
-  export let url: string | undefined;
+    /**
+     * The XContest URL.
+     */
+    url: string | undefined;
 
-  /**
-   * Whether to format the link to XContest in subtle colors.
-   */
-  export let subtleLink = false;
+    /**
+     * Whether to format the link to XContest in subtle colors.
+     */
+    subtleLink?: boolean;
+  }
+
+  const {tracktype, distance, url, subtleLink = false}: Props = $props();
 </script>
 
 {#if tracktype === undefined && distance === undefined && url === undefined}

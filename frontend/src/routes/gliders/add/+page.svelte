@@ -26,5 +26,7 @@
 <Flashes />
 
 <GliderForm>
-  <h2 slot="title" class="title is-2">{$i18n.t('glider.title--add-glider')}</h2>
+  {#snippet title()}
+    <h2 class="title is-2">{$i18n.t('glider.title--add-glider')}</h2>
+  {/snippet}
 </GliderForm>

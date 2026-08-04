@@ -1,29 +1,33 @@
 <script lang="ts">
-  import {onMount} from 'svelte';
+  import {onMount, untrack, type Snippet} from 'svelte';
 
   import {apiPost, extractResponseError} from '$lib/api';
   import MessageModal from '$lib/components/MessageModal.svelte';
   import SingleMap from '$lib/components/SingleMap.svelte';
   import {i18n} from '$lib/i18n';
   import {addFlash} from '$lib/stores';
-  import {reactive} from '$lib/svelte';
 
   import {goto} from '$app/navigation';
 
   import type {Location} from './api';
 
   // Props
-  export let location: Location | undefined = undefined;
+  interface Props {
+    location?: Location | undefined;
+    title?: Snippet;
+  }
+
+  const {location = undefined, title}: Props = $props();
 
   // Form values
-  let name: string = location?.name ?? '';
-  let countryCode: string = location?.countryCode ?? '';
-  let elevation: number | null = location?.elevation ?? null;
-  let latitude: number | null = location?.coordinates?.lat ?? null;
-  let longitude: number | null = location?.coordinates?.lon ?? null;
+  let name: string = $state(untrack(() => location?.name ?? ''));
+  let countryCode: string = $state(untrack(() => location?.countryCode ?? ''));
+  let elevation: number | null = $state(untrack(() => location?.elevation ?? null));
+  let latitude: number | null = $state(untrack(() => location?.coordinates?.lat ?? null));
+  let longitude: number | null = $state(untrack(() => location?.coordinates?.lon ?? null));
 
   // Hint for elevation auto-fill (shown when zoom is too low)
-  let showElevationHint = false;
+  let showElevationHint = $state(false);
 
   // Handle elevation lookup from map
   function handleElevationLookup(data: {elevation: number | null; zoomTooLow: boolean}) {
@@ -47,30 +51,35 @@
   }
 
   // Input transformations
-  $: if (countryCode.length > 0) {
-    countryCode = countryCode.toLocaleUpperCase();
-  }
+  $effect(() => {
+    if (countryCode.length > 0) {
+      countryCode = countryCode.toLocaleUpperCase();
+    }
+  });
 
   // Element references
-  let longitudeInput: HTMLInputElement | null;
-  let latitudeInput: HTMLInputElement | null;
+  let longitudeInput: HTMLInputElement | null = $state(null);
+  let latitudeInput: HTMLInputElement | null = $state(null);
 
   // Validation
   const fields = ['name', 'countryCode', 'elevation', 'latitude', 'longitude'] as const;
-  let fieldErrors: Record<(typeof fields)[number], string | undefined> = {
+  let fieldErrors: Record<(typeof fields)[number], string | undefined> = $state({
     name: undefined,
     countryCode: undefined,
     elevation: undefined,
     latitude: undefined,
     longitude: undefined,
-  };
+  });
   function validateName(): void {
     fieldErrors = {
       ...fieldErrors,
       name: name.length < 1 ? $i18n.t('location.error--name-empty') : undefined,
     };
   }
-  $: reactive(validateName, [name]);
+  $effect(() => {
+    void name;
+    untrack(validateName);
+  });
   function validateCountryCode(): void {
     fieldErrors = {
       ...fieldErrors,
@@ -80,14 +89,20 @@
           : undefined,
     };
   }
-  $: reactive(validateCountryCode, [countryCode]);
+  $effect(() => {
+    void countryCode;
+    untrack(validateCountryCode);
+  });
   function validateElevation(): void {
     fieldErrors = {
       ...fieldErrors,
       elevation: elevation === null ? $i18n.t('location.error--elevation-empty') : undefined,
     };
   }
-  $: reactive(validateElevation, [elevation]);
+  $effect(() => {
+    void elevation;
+    untrack(validateElevation);
+  });
   function validateLatitude(): void {
     fieldErrors = {
       ...fieldErrors,
@@ -97,7 +112,10 @@
           : undefined,
     };
   }
-  $: reactive(validateLatitude, [latitude, longitude]);
+  $effect(() => {
+    void [latitude, longitude];
+    untrack(validateLatitude);
+  });
   function validateLongitude(): void {
     fieldErrors = {
       ...fieldErrors,
@@ -107,7 +125,10 @@
           : undefined,
     };
   }
-  $: reactive(validateLongitude, [latitude, longitude]);
+  $effect(() => {
+    void [latitude, longitude];
+    untrack(validateLongitude);
+  });
   function validateAll(): void {
     validateName();
     validateCountryCode();
@@ -122,8 +143,9 @@
   }
 
   // Error handling
-  let submitEnabled = true;
-  let submitError: {type: 'authentication'} | {type: 'api-error'; message: string} | undefined;
+  let submitEnabled = $state(true);
+  let submitError: {type: 'authentication'} | {type: 'api-error'; message: string} | undefined =
+    $state();
 
   async function submitForm(): Promise<void> {
     submitEnabled = false;
@@ -188,12 +210,16 @@
     message={$i18n.t('common.error--login-session-expired')}
     showClose={false}
   >
-    <section slot="buttons">
-      <a
-        href="/auth/login/?redirect=/locations/{location == undefined ? '' : `${location.id}/edit`}"
-        class="button is-warning">{$i18n.t('navigation.login')}</a
-      >
-    </section>
+    {#snippet buttons()}
+      <section>
+        <a
+          href="/auth/login/?redirect=/locations/{location == undefined
+            ? ''
+            : `${location.id}/edit`}"
+          class="button is-warning">{$i18n.t('navigation.login')}</a
+        >
+      </section>
+    {/snippet}
   </MessageModal>
 {:else if submitError?.type === 'api-error'}
   <MessageModal
@@ -203,16 +229,16 @@
       ? $i18n.t('location.error--add-error', {message: submitError.message})
       : $i18n.t('location.error--update-error', {message: submitError.message})}
     showClose={true}
-    on:closed={() => (submitError = undefined)}
+    onClose={() => (submitError = undefined)}
   />
 {/if}
 
-<slot name="title" />
+{@render title?.()}
 
 <div class="spaced-headers">
   <form
     method="post"
-    on:submit={(event) => {
+    onsubmit={(event) => {
       event.preventDefault();
       void submitForm();
     }}

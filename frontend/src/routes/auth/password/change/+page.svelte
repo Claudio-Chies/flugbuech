@@ -1,5 +1,5 @@
 <script lang="ts">
-  import {onMount} from 'svelte';
+  import {onMount, untrack} from 'svelte';
 
   import {ensureError} from '$lib/assert';
   import {requireLogin} from '$lib/auth';
@@ -8,7 +8,6 @@
   import {MIN_PASSWORD_LENGTH} from '$lib/constants';
   import {i18n} from '$lib/i18n';
   import {addFlash, loginState} from '$lib/stores';
-  import {reactive} from '$lib/svelte';
 
   import {goto} from '$app/navigation';
 
@@ -16,27 +15,30 @@
   import {apiChangePassword} from './api';
 
   // Form values
-  let current: string = '';
-  let new1: string = '';
-  let new2: string = '';
+  let current: string = $state('');
+  let new1: string = $state('');
+  let new2: string = $state('');
 
   // Element bindings
-  let flashes: Flashes;
+  let flashes: Flashes | undefined = $state();
 
   // Validation
   const fields = ['current', 'new1', 'new2'] as const;
-  let fieldErrors: Record<(typeof fields)[number], string | undefined> = {
+  let fieldErrors: Record<(typeof fields)[number], string | undefined> = $state({
     current: undefined,
     new1: undefined,
     new2: undefined,
-  };
+  });
   function validateCurrent(): void {
     fieldErrors = {
       ...fieldErrors,
       current: current.length < 1 ? $i18n.t('auth.prose--enter-current-password') : undefined,
     };
   }
-  $: reactive(validateCurrent, [current]);
+  $effect(() => {
+    void current;
+    untrack(validateCurrent);
+  });
   function validateNew1(): void {
     fieldErrors = {
       ...fieldErrors,
@@ -46,7 +48,10 @@
           : undefined,
     };
   }
-  $: reactive(validateNew1, [new1]);
+  $effect(() => {
+    void new1;
+    untrack(validateNew1);
+  });
   function validateNew2(): void {
     fieldErrors = {
       ...fieldErrors,
@@ -58,7 +63,10 @@
             : $i18n.t('auth.error--password-dont-match'),
     };
   }
-  $: reactive(validateNew2, [new1, new2]);
+  $effect(() => {
+    void [new1, new2];
+    untrack(validateNew2);
+  });
   function validateAll(): void {
     validateCurrent();
     validateNew1();
@@ -71,8 +79,8 @@
   }
 
   // Error handling
-  let submitEnabled = true;
-  let submitError: {type: 'api-error'; message: string} | undefined;
+  let submitEnabled = $state(true);
+  let submitError: {type: 'api-error'; message: string} | undefined = $state();
 
   async function submitForm(): Promise<void> {
     submitEnabled = false;
@@ -119,7 +127,7 @@
         severity: 'error',
         icon: 'fa-circle-exclamation',
       });
-      flashes.update(true);
+      flashes?.update(true);
     }
 
     submitEnabled = true;
@@ -151,7 +159,7 @@
     title={$i18n.t('common.error--api-error')}
     message={submitError.message}
     showClose={true}
-    on:closed={() => (submitError = undefined)}
+    onClose={() => (submitError = undefined)}
   />
 {/if}
 
@@ -161,7 +169,7 @@
 
 <form
   method="post"
-  on:submit={(event) => {
+  onsubmit={(event) => {
     event.preventDefault();
     void submitForm();
   }}

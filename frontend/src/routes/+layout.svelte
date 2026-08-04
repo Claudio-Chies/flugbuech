@@ -1,12 +1,18 @@
 <script lang="ts">
-  import {onMount} from 'svelte';
+  import {onMount, type Snippet} from 'svelte';
 
   import CountryFlag from '$lib/components/CountryFlag.svelte';
   import NavbarItem from '$lib/components/NavbarItem.svelte';
   import {changeLanguage, i18n, initializeI18n} from '$lib/i18n';
   import {loginState, refreshLoginState} from '$lib/stores';
 
-  let menuOpened = false;
+  interface Props {
+    children?: Snippet;
+  }
+
+  const {children}: Props = $props();
+
+  let menuOpened = $state(false);
 
   function toggleMenu(): void {
     menuOpened = !menuOpened;
@@ -38,8 +44,8 @@
       data-target="navbar-contents"
       tabindex="0"
       class:is-active={menuOpened}
-      on:click={toggleMenu}
-      on:keydown={(event) => {
+      onclick={toggleMenu}
+      onkeydown={(event) => {
         if (['Enter', ' '].includes(event.key)) {
           event.stopPropagation();
           event.preventDefault();
@@ -87,8 +93,8 @@
     </div>
     <div class="navbar-end">
       <div class="navbar-item language-switcher">
-        <a href="." on:click={() => changeLanguage('de')}><CountryFlag countryCode="de" /></a>
-        <a href="." on:click={() => changeLanguage('en')}><CountryFlag countryCode="gb" /></a>
+        <a href="." onclick={() => changeLanguage('de')}><CountryFlag countryCode="de" /></a>
+        <a href="." onclick={() => changeLanguage('en')}><CountryFlag countryCode="gb" /></a>
       </div>
       <div class="navbar-item">
         <div class="buttons">
@@ -141,7 +147,7 @@
 <!-- Content -->
 <div class="section">
   <div class="container">
-    <slot />
+    {@render children?.()}
   </div>
 </div>
 

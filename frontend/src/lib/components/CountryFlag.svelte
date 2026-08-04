@@ -2,10 +2,14 @@
 Render a country flag using the FlagMeister SVG library.
 -->
 <script lang="ts">
-  /**
-   * The two-letter country code.
-   */
-  export let countryCode: string;
+  interface Props {
+    /**
+     * The two-letter country code.
+     */
+    countryCode: string;
+  }
+
+  const {countryCode}: Props = $props();
 </script>
 
 <!-- Custom elements from FlagMeister: E.g. <flag-ch></flag-ch> -->

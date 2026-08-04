@@ -1,16 +1,16 @@
 <!--
-    @component Render text where a placeholder can be replaced with a slot.
+    @component Render text where a placeholder can be replaced with a snippet.
 
     Example with a placeholder being replaced with <br>:
 
         <SubstitutableText text="Hello<1/>World">
-            <br slot="1" />
+            {#snippet snippet1()}<br />{/snippet}
         </SubstitutableText>
 
     Example with a placeholder wrapped in an <a> tag:
 
         <SubstitutableText text="Hello <1>World</1>">
-            <a slot="1" href="https://example.com/" target="_blank" let:text>{text}</a>
+            {#snippet snippet1(text)}<a href="https://example.com/" target="_blank">{text}</a>{/snippet}
         </SubstitutableText>
 
     Licensing: This component is originally based on `src/app/ui/SubstitutableText.svelte` as part
@@ -18,9 +18,18 @@
     AGPLv3 license.
 -->
 <script lang="ts">
+  import type {Snippet} from 'svelte';
+
   import {assertUnreachable, unreachable, unwrap} from '$lib/assert';
 
-  export let text: string | undefined;
+  interface Props {
+    text: string | undefined;
+    snippet1?: Snippet<[string]>;
+    snippet2?: Snippet<[string]>;
+    snippet3?: Snippet<[string]>;
+  }
+
+  let {text, snippet1, snippet2, snippet3}: Props = $props();
 
   // For now there are no instances of needing more than 3 different tags in a text. We can add more
   // if needed.
@@ -32,6 +41,19 @@
       return false;
     }
     return (ALLOWED_TAGS as readonly string[]).includes(tag);
+  }
+
+  function snippetForTag(tag: AllowedTag): Snippet<[string]> | undefined {
+    switch (tag) {
+      case '1':
+        return snippet1;
+      case '2':
+        return snippet2;
+      case '3':
+        return snippet3;
+      default:
+        return unreachable(tag);
+    }
   }
 
   const ALLOWED_TAGS_CHAR_SET = `[${ALLOWED_TAGS.join('')}]`;
@@ -51,7 +73,7 @@
 
   function warnMissingSlot(tag: AllowedTag): void {
     console.warn(
-      `Text "${text}" expects a child slot with \`name="${tag}"\` but it has not been provided.`,
+      `Text "${text}" expects a child snippet named \`snippet${tag}\` but it has not been provided.`,
     );
   }
 
@@ -62,13 +84,13 @@
         .filter(isAllowedTag),
     );
     for (const tag of ALLOWED_TAGS) {
-      if ($$slots[tag] && !expectedTags.has(tag)) {
-        console.warn(`Unused child slot with \`name="${tag}"\` for text "${text}".`);
+      if (snippetForTag(tag) !== undefined && !expectedTags.has(tag)) {
+        console.warn(`Unused child snippet named \`snippet${tag}\` for text "${text}".`);
       }
     }
   }
 
-  $: fragments =
+  const fragments = $derived(
     text === undefined
       ? []
       : [...text.matchAll(TAG_SPLITTER_REGEX)].map<Fragment>((match) => {
@@ -88,7 +110,7 @@
 
           if (isAllowedTag(groups.tag)) {
             const tagText = unwrap(groups.text);
-            if ($$slots[groups.tag]) {
+            if (snippetForTag(groups.tag) !== undefined) {
               return {
                 type: 'tag',
                 tag: groups.tag,
@@ -103,7 +125,7 @@
           }
 
           if (isAllowedTag(groups.selfClosingTag)) {
-            if ($$slots[groups.selfClosingTag]) {
+            if (snippetForTag(groups.selfClosingTag) !== undefined) {
               return {
                 type: 'selfClosingTag',
                 tag: groups.selfClosingTag,
@@ -117,9 +139,12 @@
           }
 
           return assertUnreachable(`Unexpected matching by TAG_SPLITTER_REGEX on '${matchedText}'`);
-        });
+        }),
+  );
 
-  $: warnUnusedSlots(fragments);
+  $effect(() => {
+    warnUnusedSlots(fragments);
+  });
 </script>
 
 {#each fragments as fragment (fragment)}
@@ -127,11 +152,11 @@
     {fragment.text}
   {:else if fragment.type === 'tag' || fragment.type === 'selfClosingTag'}
     {#if fragment.tag === '1'}
-      <slot name="1" text={fragment.text} />
+      {@render snippet1?.(fragment.text ?? '')}
     {:else if fragment.tag === '2'}
-      <slot name="2" text={fragment.text} />
+      {@render snippet2?.(fragment.text ?? '')}
     {:else if fragment.tag === '3'}
-      <slot name="3" text={fragment.text} />
+      {@render snippet3?.(fragment.text ?? '')}
     {:else}
       {unreachable(fragment.tag)}
     {/if}

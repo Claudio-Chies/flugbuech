@@ -20,20 +20,20 @@
     importCsv,
   } from './api';
 
-  let flashes: Flashes;
+  let flashes: Flashes | undefined = $state();
 
   // Form values
-  let files: FileList | undefined;
+  let files: FileList | undefined = $state();
 
   // Error handling
-  let submitError: SubmitErrorData | undefined;
+  let submitError: SubmitErrorData | undefined = $state();
 
   // Upload state
   type UploadState =
     | {step: 1; kind: 'upload'}
     | {step: 2; kind: 'analyzed'; result: CsvAnalyzeResult}
     | {step: 3; kind: 'imported'; result: CsvImportResult};
-  let state: UploadState = {step: 1, kind: 'upload'};
+  let uploadState: UploadState = $state({step: 1, kind: 'upload'});
 
   async function submitFormAnalyze(): Promise<void> {
     console.log('Sending CSV to API for analysis');
@@ -57,7 +57,7 @@
       return;
     }
 
-    state = {step: 2, kind: 'analyzed', result: analyzeResult};
+    uploadState = {step: 2, kind: 'analyzed', result: analyzeResult};
   }
 
   async function submitFormImport(): Promise<void> {
@@ -82,11 +82,11 @@
       return;
     }
 
-    state = {step: 3, kind: 'imported', result: importResult};
+    uploadState = {step: 3, kind: 'imported', result: importResult};
   }
 
-  $: hasFile = (files?.length ?? 0) > 0;
-  $: fileName = files?.[0].name ?? 'No file selected…';
+  const hasFile = $derived((files?.length ?? 0) > 0);
+  const fileName = $derived(files?.[0].name ?? 'No file selected…');
 
   onMount(() => {
     requireLogin($loginState, '/flights/import/csv/');
@@ -110,11 +110,13 @@
     message={$i18n.t('common.error--login-session-expired')}
     showClose={false}
   >
-    <section slot="buttons">
-      <a href="/auth/login/?redirect=/flights/import/csv/" class="button is-warning"
-        >{$i18n.t('navigation.login')}</a
-      >
-    </section>
+    {#snippet buttons()}
+      <section>
+        <a href="/auth/login/?redirect=/flights/import/csv/" class="button is-warning"
+          >{$i18n.t('navigation.login')}</a
+        >
+      </section>
+    {/snippet}
   </MessageModal>
 {:else if submitError?.type === 'api-error'}
   <MessageModal
@@ -122,13 +124,13 @@
     title={$i18n.t('common.error--api-error')}
     message="The CSV could not be processed due to an error on the server: {submitError.message}"
     showClose={true}
-    on:closed={() => (submitError = undefined)}
+    onClose={() => (submitError = undefined)}
   />
 {/if}
 
 <Flashes bind:this={flashes} />
 
-<h2 class="title is-2">Import Flights from CSV: Step {state.step}/3</h2>
+<h2 class="title is-2">Import Flights from CSV: Step {uploadState.step}/3</h2>
 
 <article class="message is-warning">
   <div class="message-body">
@@ -146,7 +148,7 @@
   </div>
 </article>
 
-{#if state.kind === 'upload'}
+{#if uploadState.kind === 'upload'}
   <section>
     <div class="content">
       <p>You can import a list of flights from a CSV file. It needs to follow this format:</p>
@@ -287,7 +289,7 @@
     </div>
     <form
       method="post"
-      on:submit={(event) => {
+      onsubmit={(event) => {
         event.preventDefault();
         void submitFormAnalyze();
       }}
@@ -311,15 +313,15 @@
       </div>
     </form>
   </section>
-{:else if state.kind === 'analyzed'}
+{:else if uploadState.kind === 'analyzed'}
   <h3 class="title is-3">CSV Preview</h3>
 
-  {#if state.result.errors.length > 0}
+  {#if uploadState.result.errors.length > 0}
     <article class="message is-danger">
       <div class="message-body">
         <i class="fa-solid fa-danger"></i>&ensp;<strong>Errors:</strong>
         <ul>
-          {#each state.result.errors as error}<li>
+          {#each uploadState.result.errors as error}<li>
               {#if error.csvRow !== undefined}Row {error.csvRow}:
               {/if}{error.message}
             </li>{/each}
@@ -327,12 +329,12 @@
       </div>
     </article>
   {/if}
-  {#if state.result.warnings.length > 0}
+  {#if uploadState.result.warnings.length > 0}
     <article class="message is-warning">
       <div class="message-body content">
         <i class="fa-solid fa-warning"></i>&ensp;<strong>Warnings:</strong>
         <ul>
-          {#each state.result.warnings as warning}<li>
+          {#each uploadState.result.warnings as warning}<li>
               {#if warning.csvRow !== undefined}Row {warning.csvRow}:
               {/if}{warning.message}
             </li>{/each}
@@ -340,12 +342,12 @@
       </div>
     </article>
   {/if}
-  {#if state.result.errors.length === 0 && state.result.warnings.length === 0}
+  {#if uploadState.result.errors.length === 0 && uploadState.result.warnings.length === 0}
     <article class="message is-success">
       <div class="message-body content">
         Hooray, CSV file looks valid, no warnings or errors were detected. Click the
-        <strong>Import CSV</strong> button below, to import {state.result.flights.length} flights into
-        your flight book.<br />
+        <strong>Import CSV</strong> button below, to import {uploadState.result.flights.length} flights
+        into your flight book.<br />
       </div>
     </article>
   {/if}
@@ -369,8 +371,8 @@
         </tr>
       </thead>
       <tbody>
-        {#each state.result.flights as flight}
-          {@const messages = state.result.messagesByRowAndField}
+        {#each uploadState.result.flights as flight}
+          {@const messages = uploadState.result.messagesByRowAndField}
 
           {@const hasUnspecificErrors =
             messages[NO_ROW].errors.length > 0 ||
@@ -578,21 +580,21 @@
     <p>Do you want to import the flights above into your flight book?</p>
     <button
       class="button is-primary"
-      disabled={state.result.errors.length > 0}
+      disabled={uploadState.result.errors.length > 0}
       type="button"
-      on:click={submitFormImport}
+      onclick={submitFormImport}
     >
       Import CSV
     </button>
   </div>
-{:else if state.kind === 'imported'}
+{:else if uploadState.kind === 'imported'}
   <article
     class="message"
-    class:is-success={state.result.success}
-    class:is-danger={!state.result.success}
+    class:is-success={uploadState.result.success}
+    class:is-danger={!uploadState.result.success}
   >
     <div class="message-body">
-      {#if state.result.success}
+      {#if uploadState.result.success}
         <i class="fa-solid fa-circle-check"></i>&nbsp;Successfully imported flights from CSV! Go to
         your <a href="/flights/">flight list</a> to see them.
       {:else}
