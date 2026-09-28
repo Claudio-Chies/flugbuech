@@ -12,13 +12,18 @@
   import type {Data} from './+page';
   import type {Glider} from './api';
 
-  export let data: Data;
+  interface Props {
+    data: Data;
+  }
 
-  let flashes: Flashes;
+  const {data}: Props = $props();
 
-  let gliderToDelete: Glider | undefined;
-  let deleting = false;
-  let deleteError: {type: 'authentication'} | {type: 'api-error'; message: string} | undefined;
+  let flashes: Flashes | undefined = $state();
+
+  let gliderToDelete: Glider | undefined = $state();
+  let deleting = $state(false);
+  let deleteError: {type: 'authentication'} | {type: 'api-error'; message: string} | undefined =
+    $state();
 
   async function deleteGlider(): Promise<void> {
     if (gliderToDelete !== undefined) {
@@ -52,7 +57,7 @@
       }
 
       // Show flash message
-      flashes.update(true);
+      flashes?.update(true);
 
       // Hide delete dialog
       gliderToDelete = undefined;
@@ -71,9 +76,11 @@
     message={$i18n.t('common.error--login-session-expired')}
     showClose={false}
   >
-    <section slot="buttons">
-      <a href="/auth/login/" class="button is-warning">{$i18n.t('navigation.login')}</a>
-    </section>
+    {#snippet buttons()}
+      <section>
+        <a href="/auth/login/" class="button is-warning">{$i18n.t('navigation.login')}</a>
+      </section>
+    {/snippet}
   </MessageModal>
 {:else if deleteError?.type === 'api-error'}
   <MessageModal
@@ -81,7 +88,7 @@
     title={$i18n.t('common.error--api-error')}
     message={$i18n.t('gliders.prose--delete-error', {message: deleteError.message})}
     showClose={true}
-    on:closed={() => (deleteError = undefined)}
+    onClose={() => (deleteError = undefined)}
   />
 {:else if gliderToDelete !== undefined}
   <DialogModal
@@ -96,14 +103,16 @@
     )}
     dialogClass="is-danger"
   >
-    <section slot="buttons">
-      <button class="button is-white" on:click={() => (gliderToDelete = undefined)}>
-        {$i18n.t('common.action--no-cancel')}
-      </button>
-      <button class="button is-danger" disabled={deleting} on:click={() => void deleteGlider()}>
-        {$i18n.t('common.action--yes-delete')}
-      </button>
-    </section>
+    {#snippet buttons()}
+      <section>
+        <button class="button is-white" onclick={() => (gliderToDelete = undefined)}>
+          {$i18n.t('common.action--no-cancel')}
+        </button>
+        <button class="button is-danger" disabled={deleting} onclick={() => void deleteGlider()}>
+          {$i18n.t('common.action--yes-delete')}
+        </button>
+      </section>
+    {/snippet}
   </DialogModal>
 {/if}
 
@@ -174,7 +183,7 @@
                   class="icon has-text-danger"
                   title={$i18n.t('gliders.action--delete-glider')}
                   aria-label={$i18n.t('gliders.action--delete-glider')}
-                  on:click={() => (gliderToDelete = glider)}
+                  onclick={() => (gliderToDelete = glider)}
                 >
                   <i class="fa-solid fa-trash-alt"></i>
                 </button>

@@ -24,7 +24,7 @@
   </div>
   <div class="message-body">
     <SubstitutableText text={$i18n.t('home.news.2025-11-14')}>
-      <a slot="1" href="mailto:flugbuech@bargen.dev" let:text>{text}</a>
+      {#snippet snippet1(text)}<a href="mailto:flugbuech@bargen.dev">{text}</a>{/snippet}
     </SubstitutableText>
   </div>
 </article>
@@ -33,38 +33,38 @@
 
 <p class="content">
   <SubstitutableText text={$i18n.t('home.prose--intro')}>
-    <em slot="1" let:text>{text}</em>
+    {#snippet snippet1(text)}<em>{text}</em>{/snippet}
   </SubstitutableText>
 </p>
 
 <div class="content">
   <SubstitutableText text={$i18n.t('home.prose--what-is')}>
-    <em slot="1" let:text>{text}</em>
+    {#snippet snippet1(text)}<em>{text}</em>{/snippet}
   </SubstitutableText>
   <ul>
     <li>
       <SubstitutableText text={$i18n.t('home.prose--what-is-summary')}>
-        <strong slot="1" let:text>{text}</strong>
+        {#snippet snippet1(text)}<strong>{text}</strong>{/snippet}
       </SubstitutableText>
     </li>
     <li>
       <SubstitutableText text={$i18n.t('home.prose--what-is-goal')}>
-        <strong slot="1" let:text>{text}</strong>
+        {#snippet snippet1(text)}<strong>{text}</strong>{/snippet}
       </SubstitutableText>
     </li>
     <li>
       <SubstitutableText text={$i18n.t('home.prose--what-is-additional-information')}>
-        <strong slot="1" let:text>{text}</strong>
+        {#snippet snippet1(text)}<strong>{text}</strong>{/snippet}
       </SubstitutableText>
     </li>
     <li>
       <SubstitutableText text={$i18n.t('home.prose--what-is-stats')}>
-        <strong slot="1" let:text>{text}</strong>
+        {#snippet snippet1(text)}<strong>{text}</strong>{/snippet}
       </SubstitutableText>
     </li>
     <li>
       <SubstitutableText text={$i18n.t('home.prose--what-is-no-ads')}>
-        <strong slot="1" let:text>{text}</strong>
+        {#snippet snippet1(text)}<strong>{text}</strong>{/snippet}
       </SubstitutableText>
     </li>
   </ul>
@@ -72,8 +72,9 @@
 
 <p class="content">
   <SubstitutableText text={$i18n.t('home.prose--screenshots')}>
-    <a slot="1" href="/screenshots/" let:text>{text}</a>
-    <a slot="2" href="https://github.com/dbrgn/flugbuech#status" let:text>{text}</a>
+    {#snippet snippet1(text)}<a href="/screenshots/">{text}</a>{/snippet}
+    {#snippet snippet2(text)}<a href="https://github.com/dbrgn/flugbuech#status">{text}</a
+      >{/snippet}
   </SubstitutableText>
 </p>
 
@@ -87,19 +88,19 @@
 <h4 class="title is-size-5">{$i18n.t('home.faq.signup')}</h4>
 <p class="content">
   <SubstitutableText text={$i18n.t('home.faq.signup--answer-1')}>
-    <a slot="1" href="/auth/registration/" let:text>{text}</a>
+    {#snippet snippet1(text)}<a href="/auth/registration/">{text}</a>{/snippet}
   </SubstitutableText>
 </p>
 <p class="content">
   <SubstitutableText text={$i18n.t('home.faq.signup--answer-2')}>
-    <a slot="1" href="mailto:flugbuech@bargen.dev" let:text>{text}</a>
+    {#snippet snippet1(text)}<a href="mailto:flugbuech@bargen.dev">{text}</a>{/snippet}
   </SubstitutableText>
 </p>
 
 <h4 class="title is-size-5">{$i18n.t('home.faq.import')}</h4>
 <p class="content">
   <SubstitutableText text={$i18n.t('home.faq.import--answer-1')}>
-    <a slot="1" href="/flights/import/csv/" let:text>{text}</a>
+    {#snippet snippet1(text)}<a href="/flights/import/csv/">{text}</a>{/snippet}
   </SubstitutableText>
 </p>
 
@@ -108,15 +109,16 @@
 </h4>
 <p class="content">
   <SubstitutableText text={$i18n.t('home.faq.source-answer-1')}>
-    <a slot="1" href="https://github.com/dbrgn/flugbuech" let:text>{text}</a>
-    <a slot="2" href="mailto:flugbuech@bargen.dev" let:text>{text}</a>
+    {#snippet snippet1(text)}<a href="https://github.com/dbrgn/flugbuech">{text}</a>{/snippet}
+    {#snippet snippet2(text)}<a href="mailto:flugbuech@bargen.dev">{text}</a>{/snippet}
   </SubstitutableText>
 </p>
 
 <h4 class="title is-size-5">{$i18n.t('home.faq.name')}</h4>
 <p class="content">
   <SubstitutableText text={$i18n.t('home.faq.name-answer-1')}>
-    <a slot="1" href="https://en.wikipedia.org/wiki/Swiss_German" let:text>{text}</a>
+    {#snippet snippet1(text)}<a href="https://en.wikipedia.org/wiki/Swiss_German">{text}</a
+      >{/snippet}
   </SubstitutableText>
 </p>
 
@@ -143,25 +145,25 @@
   <li>
     <strong>14.5.</strong>
     <SubstitutableText text={$i18n.t('home.news.2024-05-14')}>
-      <a slot="1" href="/locations/" let:text>{text}</a>
+      {#snippet snippet1(text)}<a href="/locations/">{text}</a>{/snippet}
     </SubstitutableText>
   </li>
   <li>
     <strong>1.4.</strong>
     <SubstitutableText text={$i18n.t('home.news.2024-04-01')}>
-      <a slot="1" href="/flights/import/csv/" let:text>{text}</a>
+      {#snippet snippet1(text)}<a href="/flights/import/csv/">{text}</a>{/snippet}
     </SubstitutableText>
   </li>
   <li>
     <strong>19.3.</strong>
     <SubstitutableText text={$i18n.t('home.news.2024-03-19')}>
-      <a slot="1" href="/profile/" let:text>{text}</a>
+      {#snippet snippet1(text)}<a href="/profile/">{text}</a>{/snippet}
     </SubstitutableText>
   </li>
   <li>
     <strong>13.3.</strong>
     <SubstitutableText text={$i18n.t('home.news.2024-03-13')}>
-      <a slot="1" href="mailto:flugbuech@bargen.dev" let:text>{text}</a>
+      {#snippet snippet1(text)}<a href="mailto:flugbuech@bargen.dev">{text}</a>{/snippet}
     </SubstitutableText>
   </li>
 </ul>

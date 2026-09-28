@@ -5,18 +5,28 @@
   import BaseMap from './BaseMap.svelte';
   import {DEFAULT_MAP_CENTER} from './map';
 
-  export let latitude: number | null = null;
-  export let longitude: number | null = null;
-  export let editable: boolean = false;
-  export let center: LngLatLike = DEFAULT_MAP_CENTER;
-  export let zoom: number = 6;
+  interface Props {
+    latitude?: number | null;
+    longitude?: number | null;
+    editable?: boolean;
+    center?: LngLatLike;
+    zoom?: number;
+    // Callback props for location data lookups (forwarded to BaseMap)
+    onElevationLookup?:
+      | ((data: {elevation: number | null; zoomTooLow: boolean}) => void)
+      | undefined;
+    onCountryLookup?: ((data: {countryCode: string | null}) => void) | undefined;
+  }
 
-  // Callback props for location data lookups (forwarded to BaseMap)
-  export let onElevationLookup:
-    | ((data: {elevation: number | null; zoomTooLow: boolean}) => void)
-    | undefined = undefined;
-  export let onCountryLookup: ((data: {countryCode: string | null}) => void) | undefined =
-    undefined;
+  let {
+    latitude = $bindable(null),
+    longitude = $bindable(null),
+    editable = false,
+    center = DEFAULT_MAP_CENTER,
+    zoom = 6,
+    onElevationLookup = undefined,
+    onCountryLookup = undefined,
+  }: Props = $props();
 </script>
 
 <BaseMap

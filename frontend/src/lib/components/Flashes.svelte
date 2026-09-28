@@ -3,7 +3,7 @@
 
   import {flashes, type Flash} from '$lib/stores';
 
-  let loadedFlashes: Flash[] = [];
+  let loadedFlashes: Flash[] = $state([]);
 
   export function update(replace = false): void {
     if ($flashes.length > 0) {

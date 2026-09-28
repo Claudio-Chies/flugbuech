@@ -24,5 +24,7 @@
 <Flashes />
 
 <LocationForm>
-  <h2 slot="title" class="title is-2">Add Location</h2>
+  {#snippet title()}
+    <h2 class="title is-2">Add Location</h2>
+  {/snippet}
 </LocationForm>

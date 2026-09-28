@@ -6,9 +6,9 @@
 
   import type {Data} from './+page';
 
-  export let data: Data;
+  let {data}: {data: Data} = $props();
 
-  $: location = data.location;
+  const location = $derived(data.location);
 </script>
 
 <nav class="breadcrumb" aria-label="breadcrumbs">

@@ -8,20 +8,20 @@
   import {sanitizeRedirectPath} from '$lib/urls';
 
   import {goto} from '$app/navigation';
-  import {page} from '$app/stores';
+  import {page} from '$app/state';
 
   import {apiLogin} from './api';
 
   // Form values
-  let username: string;
-  let password: string;
+  let username: string = $state('');
+  let password: string = $state('');
 
   // Element bindings
-  let flashes: Flashes;
+  let flashes: Flashes | undefined = $state();
 
   // Error handling
-  let submitEnabled = true;
-  let submitError: {type: 'api-error'; message: string} | undefined;
+  let submitEnabled = $state(true);
+  let submitError: {type: 'api-error'; message: string} | undefined = $state();
 
   async function submitForm(): Promise<void> {
     submitEnabled = false;
@@ -51,7 +51,7 @@
       refreshLoginState();
 
       // Redirect to home or to requested page
-      goto(sanitizeRedirectPath($page.url.searchParams.get('redirect'), '/'));
+      goto(sanitizeRedirectPath(page.url.searchParams.get('redirect'), '/'));
     } else {
       // Login failed
       addFlash({
@@ -59,7 +59,7 @@
         severity: 'error',
         icon: 'fa-circle-exclamation',
       });
-      flashes.update(true);
+      flashes?.update(true);
       password = '';
     }
 
@@ -73,7 +73,7 @@
     title={$i18n.t('common.error--api-error')}
     message={submitError.message}
     showClose={true}
-    on:closed={() => (submitError = undefined)}
+    onClose={() => (submitError = undefined)}
   />
 {/if}
 
@@ -83,7 +83,7 @@
 
 <form
   method="post"
-  on:submit={(event) => {
+  onsubmit={(event) => {
     event.preventDefault();
     void submitForm();
   }}
@@ -91,7 +91,7 @@
   <div class="field">
     <label class="label" for="username">{$i18n.t('auth.title--username')}</label>
     <div class="control has-icons-left">
-      <!-- svelte-ignore a11y-autofocus -->
+      <!-- svelte-ignore a11y_autofocus -->
       <input
         class="input"
         type="text"
@@ -132,7 +132,7 @@
 
   <p>
     <SubstitutableText text={$i18n.t('auth.prose--register-now')}>
-      <a slot="1" href="/auth/registration/" let:text>{text}</a>
+      {#snippet snippet1(text)}<a href="/auth/registration/">{text}</a>{/snippet}
     </SubstitutableText>
   </p>
 </form>

@@ -7,11 +7,11 @@
 
   import type {Data} from './+page';
 
-  export let data: Data;
+  let {data}: {data: Data} = $props();
 
-  $: flight = data.flight;
-  $: launchAt = data.flight.launchAt;
-  $: landingAt = data.flight.landingAt;
+  const flight = $derived(data.flight);
+  const launchAt = $derived(data.flight.launchAt);
+  const landingAt = $derived(data.flight.landingAt);
 </script>
 
 <nav class="breadcrumb" aria-label="breadcrumbs">
@@ -35,12 +35,14 @@
   locations={data.locations}
   existingFlightNumbers={data.existingFlightNumbers}
 >
-  <h2 slot="title" class="title is-2">
-    {$i18n.t('flight.title--edit-flight', {
-      flight: flightName(
-        {...data.flight, launchAt: launchAt?.name, landingAt: landingAt?.name},
-        $i18n,
-      ),
-    })}
-  </h2>
+  {#snippet title()}
+    <h2 class="title is-2">
+      {$i18n.t('flight.title--edit-flight', {
+        flight: flightName(
+          {...data.flight, launchAt: launchAt?.name, landingAt: landingAt?.name},
+          $i18n,
+        ),
+      })}
+    </h2>
+  {/snippet}
 </FlightForm>

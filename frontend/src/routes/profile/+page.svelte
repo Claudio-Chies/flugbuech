@@ -9,12 +9,12 @@
   import type {Data} from './+page';
   import {apiUpdateProfile} from './api';
 
-  export let data: Data;
+  let {data}: {data: Data} = $props();
 
-  let flashes: Flashes;
+  let flashes: Flashes | undefined = $state();
 
   // Error handling
-  let errorModal: {type: 'api-error'; message: string} | undefined;
+  let errorModal: {type: 'api-error'; message: string} | undefined = $state();
 
   function updateNewsOptIn(optIn: boolean): void {
     apiUpdateProfile({newsOptIn: optIn})
@@ -44,7 +44,7 @@
     title={$i18n.t('common.error--api-error')}
     message={errorModal.message}
     showClose={true}
-    on:closed={() => (errorModal = undefined)}
+    onClose={() => (errorModal = undefined)}
   />
 {/if}
 
@@ -61,13 +61,13 @@
 
 <p class="block">
   <SubstitutableText text={$i18n.t('profile.prose--welcome')}>
-    <strong slot="1">{data.profile.username}</strong>
+    {#snippet snippet1()}<strong>{data.profile.username}</strong>{/snippet}
   </SubstitutableText>
 </p>
 
 <p class="block">
   <SubstitutableText text={$i18n.t('profile.prose--change-password')}>
-    <a slot="1" href="/auth/password/change/" let:text>{text}</a>
+    {#snippet snippet1(text)}<a href="/auth/password/change/">{text}</a>{/snippet}
   </SubstitutableText>
 </p>
 
@@ -104,11 +104,11 @@
     <p>
       {#if data.profile.newsOptIn}
         <SubstitutableText text={$i18n.t('profile.newsletter-allowed')}>
-          <strong slot="1" let:text>{text}</strong>
+          {#snippet snippet1(text)}<strong>{text}</strong>{/snippet}
         </SubstitutableText>
       {:else}
         <SubstitutableText text={$i18n.t('profile.newsletter-disallowed')}>
-          <strong slot="1" let:text>{text}</strong>
+          {#snippet snippet1(text)}<strong>{text}</strong>{/snippet}
         </SubstitutableText>{/if}
     </p>
   </div>
@@ -118,7 +118,7 @@
       class="button"
       class:is-warning={data.profile.newsOptIn}
       class:is-primary={!data.profile.newsOptIn}
-      on:click={() => updateNewsOptIn(!data.profile.newsOptIn)}
+      onclick={() => updateNewsOptIn(!data.profile.newsOptIn)}
     >
       {data.profile.newsOptIn
         ? $i18n.t('profile.newsletter-unsubscribe')

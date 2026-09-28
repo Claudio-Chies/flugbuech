@@ -6,7 +6,7 @@
 
   import type {Data} from './+page';
 
-  export let data: Data;
+  let {data}: {data: Data} = $props();
 </script>
 
 <nav class="breadcrumb" aria-label="breadcrumbs">
@@ -22,10 +22,12 @@
 <Flashes />
 
 <GliderForm glider={data.glider}>
-  <h2 slot="title" class="title is-2">
-    {$i18n.t('glider.title--edit-glider', {
-      manufacturer: data.glider.manufacturer,
-      model: data.glider.model,
-    })}
-  </h2>
+  {#snippet title()}
+    <h2 class="title is-2">
+      {$i18n.t('glider.title--edit-glider', {
+        manufacturer: data.glider.manufacturer,
+        model: data.glider.model,
+      })}
+    </h2>
+  {/snippet}
 </GliderForm>

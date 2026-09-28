@@ -6,7 +6,7 @@
 
   import type {Data} from './+page';
 
-  export let data: Data;
+  let {data}: {data: Data} = $props();
 </script>
 
 <nav class="breadcrumb" aria-label="breadcrumbs">
@@ -20,7 +20,9 @@
 <Flashes />
 
 <LocationForm location={data.location}>
-  <h2 slot="title" class="title is-2">
-    {$i18n.t('location.title--edit-location', {name: data.location.name})}
-  </h2>
+  {#snippet title()}
+    <h2 class="title is-2">
+      {$i18n.t('location.title--edit-location', {name: data.location.name})}
+    </h2>
+  {/snippet}
 </LocationForm>

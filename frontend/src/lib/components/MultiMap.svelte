@@ -3,7 +3,11 @@
   import BaseMap from './BaseMap.svelte';
   import type {NamedCoordinates} from './map';
 
-  export let markers: NamedCoordinates[];
+  interface Props {
+    markers: NamedCoordinates[];
+  }
+
+  const {markers}: Props = $props();
 </script>
 
 <BaseMap mode="multi" {markers} />

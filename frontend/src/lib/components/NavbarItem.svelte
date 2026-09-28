@@ -1,25 +1,28 @@
 <script lang="ts">
   import {unreachable} from '$lib/assert';
 
-  export let href: string;
-  export let text: string;
-  export let type: 'link' | 'button' = 'link';
-  export let reload = false;
-  export let closeMenu: () => void;
-
-  let linkClass: string;
-  $: switch (type) {
-    case 'link':
-      linkClass = 'navbar-item';
-      break;
-    case 'button':
-      linkClass = 'button';
-      break;
-    default:
-      unreachable(type);
+  interface Props {
+    href: string;
+    text: string;
+    type?: 'link' | 'button';
+    reload?: boolean;
+    closeMenu: () => void;
   }
+
+  const {href, text, type = 'link', reload = false, closeMenu}: Props = $props();
+
+  const linkClass = $derived.by(() => {
+    switch (type) {
+      case 'link':
+        return 'navbar-item';
+      case 'button':
+        return 'button';
+      default:
+        return unreachable(type);
+    }
+  });
 </script>
 
-<a class={linkClass} {href} on:click={() => closeMenu()} data-sveltekit-reload={reload || null}>
+<a class={linkClass} {href} onclick={() => closeMenu()} data-sveltekit-reload={reload || null}>
   {text}
 </a>

@@ -1,10 +1,14 @@
 <script lang="ts">
-  export let id: string;
-  export let label: string;
-  export let required = false;
-  export let error = false;
-  export let icon: string;
-  export let value: string;
+  interface Props {
+    id: string;
+    label: string;
+    required?: boolean;
+    error?: boolean;
+    icon: string;
+    value?: string;
+  }
+
+  let {id, label, required = false, error = false, icon, value = $bindable('')}: Props = $props();
 
   // TODO: Should this be used for other forms as well?
 </script>

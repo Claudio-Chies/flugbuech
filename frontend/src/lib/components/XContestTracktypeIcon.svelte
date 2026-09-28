@@ -4,10 +4,14 @@ Render the XContest track type.
 <script lang="ts">
   import type {XContestTracktype} from '$lib/xcontest';
 
-  /**
-   * The track type.
-   */
-  export let tracktype: XContestTracktype;
+  interface Props {
+    /**
+     * The track type.
+     */
+    tracktype: XContestTracktype;
+  }
+
+  const {tracktype}: Props = $props();
 </script>
 
 <img
