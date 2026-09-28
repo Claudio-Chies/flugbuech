@@ -28,7 +28,7 @@
   "dependencies": {
     "i18next": "^25.3.6",
     "i18next-icu": "^2.3.0",
-    "maplibre-gl": "^1.15.1",
+    "maplibre-gl": "^6.4.1",
     "vite": "^8.1.4",
     "zod": "^3.22.4"
   },
@@ -52,6 +52,6 @@
     "svelte-check": "^4.0.0",
     "tslib": "^2.4.1",
     "typescript": "^5.0.0",
-    "vitest": "^4.1.10"
+    "vitest": "^5.0.2"
   }
 }
